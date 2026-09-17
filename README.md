@@ -123,18 +123,18 @@ GET
 
 ### Vue carte
 
-┌─────────────────────────────────────────────────────────────┐
-│ 🇫🇷 Dashboard Carburants France ⚡ LIVE │
-├──────────────┬──────────────────────────────────────────────┤
-│ 🔍 Recherche │ │
-│ ⛽ Carburant │ 🗺️ Carte interactive │
-│ 📍 Département│ │
-│ 💰 Prix max │ 📍 📍 📍 📍 📍 📍 📍 📍 📍 📍 📍 📍 │
-│ 🏪 Services │ 📍 📍 📍 📍 📍 📍 📍 📍 📍 📍 │
-│ │ 📍 📍 📍 📍 📍 📍 📍 📍 📍 │
-│ 📊 Stats │ │
-│ 📈 Graphiques │ 🇫🇷 France │
-└──────────────┴──────────────────────────────────────────────┘
+    ┌─────────────────────────────────────────────────────────────┐
+    │ 🇫🇷 Dashboard Carburants France ⚡ LIVE │
+    ├──────────────┬──────────────────────────────────────────────┤
+    │ 🔍 Recherche │ │
+    │ ⛽ Carburant │ 🗺️ Carte interactive │
+    │ 📍 Département│ │
+    │ 💰 Prix max │ 📍 📍 📍 📍 📍 📍 📍 📍 📍 📍 📍 📍 │
+    │ 🏪 Services │ 📍 📍 📍 📍 📍 📍 📍 📍 📍 📍 │
+    │ │ 📍 📍 📍 📍 📍 📍 📍 📍 📍 │
+    │ 📊 Stats │ │
+    │ 📈 Graphiques │ 🇫🇷 France │
+    └──────────────┴──────────────────────────────────────────────┘
 
 
 ---
@@ -226,12 +226,12 @@ Pourquoi ces choix ?
     Opendatasoft : API REST standardisée, CORS activé, données officielles
 
 📁 Structure du projet
-text
 
-dashboard-carburants/
-├── index.html          # Dashboard complet (fichier unique)
-├── README.md           # Documentation (ce fichier)
-└── LICENSE             # Licence MIT
+
+    dashboard-carburants/
+    ├── index.html          # Dashboard complet (fichier unique)
+    ├── README.md           # Documentation (ce fichier)
+    └── LICENSE             # Licence MIT
 
 Le projet est volontairement mono-fichier : tout le code (HTML, CSS, JS) est dans index.html pour faciliter le déploiement et la maintenance.
 🤝 Contribution
