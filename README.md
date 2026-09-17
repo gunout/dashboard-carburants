@@ -121,6 +121,14 @@ GET
 
 ## 🖼️ Captures d'écran
 
+<img width="1800" height="802" alt="Screenshot 2026-09-17 at 08-59-11 🇫🇷 Dashboard Carburants France — Prix en temps réel" src="https://github.com/user-attachments/assets/61a7bff6-a1a0-4a48-bc9c-c4bb2e2bd322" />
+<img width="1800" height="802" alt="Screenshot 2026-09-17 at 09-00-05 🇫🇷 Dashboard Carburants France — Prix en temps réel" src="https://github.com/user-attachments/assets/8872b574-22b5-4f03-af47-2655f8541dbb" />
+
+
+
+---
+
+
 ### Vue carte
 ```text
 ╔══════════════════════════════════════════════════════════════════════════════════════════════╗
