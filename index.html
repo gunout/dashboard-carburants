@@ -8,41 +8,30 @@
     <title>🇫🇷 Dashboard Carburants France — Prix en temps réel</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='80' font-size='80'>🇫🇷</text></svg>">
     
-    <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <!-- MarkerCluster -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     
     <style>
-        /* ============================================================
-           PALETTE BLEU BLANC ROUGE
-           ============================================================ */
         :root {
-            /* Bleu France */
             --bleu: #0055A4;
             --bleu-clair: #0077CC;
             --bleu-fonce: #003D7A;
             --bleu-glow: rgba(0, 85, 164, 0.4);
-
-            /* Blanc */
             --blanc: #FFFFFF;
             --blanc-casse: #F5F7FA;
             --blanc-transparent: rgba(255, 255, 255, 0.08);
-
-            /* Rouge France */
             --rouge: #EF4135;
             --rouge-clair: #FF6B5E;
             --rouge-fonce: #C62828;
             --rouge-glow: rgba(239, 65, 53, 0.4);
-
-            /* Fond */
+            --or: #FFD700;
+            --or-glow: rgba(255, 215, 0, 0.5);
             --bg: #0A1628;
             --bg-2: #0F1D33;
             --bg-3: #152A47;
@@ -50,8 +39,6 @@
             --border: rgba(255, 255, 255, 0.1);
             --text: #E8EEF5;
             --text-dim: #8FA3BF;
-
-            /* Couleurs de prix (inspirées du drapeau) */
             --prix-bas: #10B981;
             --prix-moyen: #F59E0B;
             --prix-haut: #EF4135;
@@ -67,9 +54,6 @@
             overflow-x: hidden;
         }
 
-        /* ============================================================
-           DRAPEAU FRANÇAIS — Bande décorative
-           ============================================================ */
         .drapeau-bar {
             height: 4px;
             background: linear-gradient(90deg,
@@ -82,9 +66,6 @@
             box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
         }
 
-        /* ============================================================
-           HEADER
-           ============================================================ */
         .header {
             background: linear-gradient(135deg,
                 rgba(0, 85, 164, 0.25) 0%,
@@ -124,9 +105,7 @@
             overflow: hidden;
             box-shadow: 0 0 0 1px rgba(255,255,255,0.2);
         }
-        .header-left .subtitle .flag span {
-            flex: 1;
-        }
+        .header-left .subtitle .flag span { flex: 1; }
         .header-left .subtitle .flag span:nth-child(1) { background: var(--bleu); }
         .header-left .subtitle .flag span:nth-child(2) { background: var(--blanc); }
         .header-left .subtitle .flag span:nth-child(3) { background: var(--rouge); }
@@ -151,10 +130,7 @@
         }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
 
-        /* ============================================================
-           LAYOUT
-           ============================================================ */
-        .container { display: grid; grid-template-columns: 340px 1fr; min-height: calc(100vh - 70px); }
+        .container { display: grid; grid-template-columns: 360px 1fr; min-height: calc(100vh - 70px); }
 
         /* ============================================================
            SIDEBAR
@@ -198,7 +174,6 @@
         }
         .filter-group select option { background: var(--bg-2); }
 
-        /* Statistiques */
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -227,11 +202,149 @@
         .stat-value.red { color: var(--prix-haut); }
         .stat-value.blue { color: var(--bleu-clair); }
 
-        /* Graphiques */
+        /* ============================================================
+           TOP DÉPARTEMENTS — Liste des prix les plus bas
+           ============================================================ */
+        .top-section {
+            background: linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,215,0,0.02));
+            border: 1px solid rgba(255,215,0,0.25);
+            border-radius: 12px;
+            padding: 0.8rem;
+            margin-bottom: 0.9rem;
+        }
+        .top-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.6rem;
+        }
+        .top-header h3 {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--or);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .top-count {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            background: rgba(255,215,0,0.15);
+            padding: 0.15rem 0.5rem;
+            border-radius: 10px;
+            border: 1px solid rgba(255,215,0,0.3);
+        }
+        .top-list {
+            max-height: 320px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+        .top-list::-webkit-scrollbar { width: 4px; }
+        .top-list::-webkit-scrollbar-thumb { background: rgba(255,215,0,0.4); border-radius: 3px; }
+
+        .top-item {
+            background: rgba(0,0,0,0.25);
+            border: 1px solid rgba(255,215,0,0.15);
+            border-radius: 8px;
+            padding: 0.55rem 0.65rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 0.6rem;
+            position: relative;
+        }
+        .top-item:hover {
+            background: rgba(255,215,0,0.08);
+            border-color: rgba(255,215,0,0.5);
+            transform: translateX(2px);
+        }
+        .top-rank {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--or);
+            background: rgba(255,215,0,0.15);
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255,215,0,0.4);
+        }
+        .top-item:nth-child(1) .top-rank {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #000;
+            box-shadow: 0 0 12px var(--or-glow);
+        }
+        .top-item:nth-child(2) .top-rank {
+            background: linear-gradient(135deg, #C0C0C0, #A8A8A8);
+            color: #000;
+        }
+        .top-item:nth-child(3) .top-rank {
+            background: linear-gradient(135deg, #CD7F32, #A0522D);
+            color: #fff;
+        }
+        .top-info {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.1rem;
+        }
+        .top-dept {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--blanc);
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .top-dept-badge {
+            font-size: 0.6rem;
+            font-weight: 700;
+            background: var(--bleu);
+            color: white;
+            padding: 0.05rem 0.35rem;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+        }
+        .top-station {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .top-price {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--prix-bas);
+            white-space: nowrap;
+            text-align: right;
+        }
+        .top-price .unit {
+            font-size: 0.6rem;
+            color: var(--text-dim);
+            font-weight: 500;
+        }
+
+        .top-empty {
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            padding: 1rem 0.5rem;
+            font-style: italic;
+        }
+
+        /* Chart containers */
         .chart-container { margin-bottom: 0.9rem; }
         .chart-container canvas { max-height: 160px; }
 
-        /* Légende */
         .legend {
             display: flex;
             justify-content: space-between;
@@ -247,7 +360,6 @@
             margin-top: 0.3rem;
         }
 
-        /* Bouton */
         .btn {
             width: 100%;
             padding: 0.6rem;
@@ -293,7 +405,6 @@
         .map-overlay .count { font-size: 1.3rem; font-weight: 700; color: var(--bleu-clair); }
         .map-overlay .count-label { font-size: 0.65rem; color: var(--text-dim); }
 
-        /* Sélecteur de fond de carte */
         .basemap-selector {
             position: absolute;
             top: 1rem;
@@ -326,9 +437,7 @@
             box-shadow: 0 0 12px var(--bleu-glow);
         }
 
-        /* ============================================================
-           POPUP LEAFLET
-           ============================================================ */
+        /* Popup Leaflet */
         .leaflet-popup-content-wrapper {
             background: var(--bg-2) !important;
             color: var(--text) !important;
@@ -341,6 +450,17 @@
 
         .popup-station { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.2rem; color: var(--blanc); }
         .popup-address { font-size: 0.7rem; color: var(--text-dim); margin-bottom: 0.5rem; }
+        .popup-badge {
+            display: inline-block;
+            font-size: 0.6rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--or), #FFA500);
+            color: #000;
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            margin-bottom: 0.3rem;
+            letter-spacing: 0.5px;
+        }
         .popup-prices { display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem; }
         .popup-price-item { font-size: 0.7rem; display: flex; justify-content: space-between; padding: 0.15rem 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
         .popup-price-item .name { color: var(--text-dim); }
@@ -349,9 +469,17 @@
         .popup-price-item .value.orange { color: var(--prix-moyen); }
         .popup-price-item .value.red { color: var(--prix-haut); }
 
-        /* ============================================================
-           LOADING
-           ============================================================ */
+        /* Star marker for cheapest station */
+        .cheapest-star {
+            filter: drop-shadow(0 0 6px var(--or-glow));
+            animation: starPulse 2s ease-in-out infinite;
+        }
+        @keyframes starPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        /* Loading */
         .loading-overlay {
             position: fixed;
             inset: 0;
@@ -391,9 +519,6 @@
             transition: width 0.3s;
         }
 
-        /* ============================================================
-           RESPONSIVE
-           ============================================================ */
         @media (max-width: 900px) {
             .container { grid-template-columns: 1fr; }
             .sidebar { max-height: none; position: static; }
@@ -404,7 +529,6 @@
 </head>
 <body>
 
-    <!-- Bande décorative drapeau -->
     <div class="drapeau-bar"></div>
 
     <header class="header">
@@ -423,7 +547,6 @@
     </header>
 
     <div class="container">
-        <!-- SIDEBAR -->
         <aside class="sidebar">
             <div class="filter-group">
                 <label>🔍 Recherche</label>
@@ -433,7 +556,6 @@
             <div class="filter-group">
                 <label>⛽ Carburant</label>
                 <select id="fuel-select">
-                    <option value="all">Tous les carburants</option>
                     <option value="Gazole">Gazole</option>
                     <option value="SP95">SP95</option>
                     <option value="SP98">SP98</option>
@@ -466,7 +588,6 @@
                 </select>
             </div>
 
-            <!-- STATISTIQUES -->
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-label">Stations</div>
@@ -486,7 +607,19 @@
                 </div>
             </div>
 
-            <!-- GRAPHIQUES -->
+            <!-- ============================================ -->
+            <!-- TOP DÉPARTEMENTS — Prix les plus bas         -->
+            <!-- ============================================ -->
+            <div class="top-section">
+                <div class="top-header">
+                    <h3>🏆 Prix les plus bas par département</h3>
+                    <span class="top-count" id="top-count">—</span>
+                </div>
+                <div class="top-list" id="top-list">
+                    <div class="top-empty">Chargement…</div>
+                </div>
+            </div>
+
             <div class="chart-container">
                 <label style="font-size:0.7rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:0.4rem;">📊 Répartition par carburant</label>
                 <canvas id="chart-fuel"></canvas>
@@ -500,18 +633,15 @@
             <button class="btn" id="reset-filters">Réinitialiser les filtres</button>
         </aside>
 
-        <!-- MAP -->
         <main class="map-section">
             <div id="map"></div>
 
-            <!-- Sélecteur de fond de carte -->
             <div class="basemap-selector">
                 <button class="basemap-btn active" data-style="osm">🗺️ Standard</button>
                 <button class="basemap-btn" data-style="dark">🌙 Sombre</button>
                 <button class="basemap-btn" data-style="satellite">🛰️ Satellite</button>
             </div>
 
-            <!-- Compteur -->
             <div class="map-overlay">
                 <div class="count" id="map-count">—</div>
                 <div class="count-label">stations affichées</div>
@@ -520,6 +650,9 @@
                     <span>Cher 💸</span>
                 </div>
                 <div class="legend-bar"></div>
+                <div style="font-size:0.65rem;color:var(--text-dim);margin-top:0.4rem;text-align:center;">
+                    ⭐ = meilleur prix du département
+                </div>
             </div>
         </main>
     </div>
@@ -566,9 +699,11 @@
     const state = {
         stations: [],
         filtered: [],
+        topByDept: [],       // [{ dept, prix, station }]
         map: null,
         tileLayer: null,
         markersLayer: null,
+        starLayer: null,     // Couche des étoiles (meilleurs prix)
         chartFuel: null,
         chartDistribution: null,
         currentBasemap: 'osm'
@@ -608,22 +743,22 @@
             }
         });
         state.map.addLayer(state.markersLayer);
+
+        // Couche des étoiles (au-dessus des clusters)
+        state.starLayer = L.layerGroup().addTo(state.map);
     }
 
     function setBasemap(style) {
         if (state.tileLayer) {
             state.map.removeLayer(state.tileLayer);
         }
-
         const provider = CONFIG.TILE_PROVIDERS[style];
         state.tileLayer = L.tileLayer(provider.url, {
             attribution: provider.attribution,
             maxZoom: provider.maxZoom,
             subdomains: style === 'dark' ? 'abcd' : 'abc'
         }).addTo(state.map);
-
         state.currentBasemap = style;
-
         document.querySelectorAll('.basemap-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.style === style);
         });
@@ -639,7 +774,6 @@
 
         while (offset < CONFIG.MAX_RECORDS) {
             const url = `${CONFIG.API_BASE}?limit=${CONFIG.LIMIT}&offset=${offset}`;
-
             try {
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -662,7 +796,6 @@
                     `${allRecords.length} / ${Math.min(totalCount, CONFIG.MAX_RECORDS)}`;
 
                 if (offset < CONFIG.MAX_RECORDS) await sleep(60);
-
             } catch (error) {
                 console.error(`[Stations] Erreur offset ${offset}:`, error);
                 break;
@@ -680,15 +813,6 @@
        PARSING D'UNE STATION
        ================================================================ */
     function parseStation(r) {
-        const prix = {};
-        ['gazole', 'sp95', 'sp98', 'e10', 'e85', 'gplc'].forEach(f => {
-            const val = r[`${f}_prix`];
-            if (val && val > 0) {
-                const label = f === 'gazole' ? 'Gazole' : f === 'sp95' ? 'SP95' : f === 'sp98' ? 'SP98' : f === 'e10' ? 'E10' : f === 'e85' ? 'E85' : 'GPLc';
-                prix[label] = val;
-            }
-        });
-
         return {
             id: r.id,
             lat: r.geom?.lat,
@@ -697,7 +821,6 @@
             ville: r.ville || '',
             adresse: r.adresse || '',
             departement: r.cp ? r.cp.substring(0, 2) : '',
-            prix: prix,
             gazole: r.gazole_prix || null,
             sp95: r.sp95_prix || null,
             sp98: r.sp98_prix || null,
@@ -706,6 +829,82 @@
             gplc: r.gplc_prix || null,
             services: r.services ? r.services.replace(/[{}"]/g, '').split(',').map(s => s.trim()).filter(s => s) : []
         };
+    }
+
+    /* ================================================================
+       UTILITAIRES
+       ================================================================ */
+    function getPrixForFuel(station, fuel) {
+        const map = { 'Gazole': 'gazole', 'SP95': 'sp95', 'SP98': 'sp98', 'E10': 'e10', 'E85': 'e85', 'GPLc': 'gplc' };
+        return station[map[fuel]] || null;
+    }
+
+    /* ================================================================
+       CALCUL DU TOP PAR DÉPARTEMENT
+       ================================================================ */
+    function computeTopByDepartment(fuel) {
+        // Grouper les stations par département
+        const parDept = {};
+        state.filtered.forEach(s => {
+            const prix = getPrixForFuel(s, fuel);
+            if (prix === null || prix <= 0) return;
+            if (!s.departement) return;
+
+            if (!parDept[s.departement] || prix < parDept[s.departement].prix) {
+                parDept[s.departement] = { dept: s.departement, prix, station: s };
+            }
+        });
+
+        // Convertir en tableau et trier par prix croissant
+        return Object.values(parDept).sort((a, b) => a.prix - b.prix);
+    }
+
+    /* ================================================================
+       RENDU DE LA LISTE TOP DÉPARTEMENTS
+       ================================================================ */
+    function renderTopList() {
+        const fuel = document.getElementById('fuel-select').value;
+        const container = document.getElementById('top-list');
+        const countEl = document.getElementById('top-count');
+
+        state.topByDept = computeTopByDepartment(fuel);
+        countEl.textContent = `${state.topByDept.length} dépts`;
+
+        if (state.topByDept.length === 0) {
+            container.innerHTML = '<div class="top-empty">Aucune station trouvée pour ce carburant</div>';
+            return;
+        }
+
+        container.innerHTML = state.topByDept.map((item, idx) => {
+            const s = item.station;
+            const rang = idx + 1;
+            return `
+                <div class="top-item" data-dept="${item.dept}" data-lat="${s.lat}" data-lon="${s.lon}">
+                    <div class="top-rank">${rang}</div>
+                    <div class="top-info">
+                        <div class="top-dept">
+                            <span class="top-dept-badge">${item.dept}</span>
+                            ${s.ville || 'Station'}
+                        </div>
+                        <div class="top-station">${s.adresse || s.ville || ''} ${s.cp}</div>
+                    </div>
+                    <div class="top-price">
+                        ${item.prix.toFixed(3)}<span class="unit"> €/L</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Ajouter les écouteurs de clic
+        container.querySelectorAll('.top-item').forEach(el => {
+            el.addEventListener('click', () => {
+                const lat = parseFloat(el.dataset.lat);
+                const lon = parseFloat(el.dataset.lon);
+                if (lat && lon) {
+                    state.map.flyTo([lat, lon], 14, { duration: 1.2 });
+                }
+            });
+        });
     }
 
     /* ================================================================
@@ -732,17 +931,9 @@
             return true;
         });
 
-        if (fuel !== 'all') {
-            state.filtered = state.filtered.filter(s => getPrixForFuel(s, fuel) !== null);
-        }
+        state.filtered = state.filtered.filter(s => getPrixForFuel(s, fuel) !== null);
 
         renderAll();
-    }
-
-    function getPrixForFuel(station, fuel) {
-        if (fuel === 'all') return station.gazole || station.sp95 || station.sp98 || station.e10 || station.e85 || station.gplc;
-        const map = { 'Gazole': 'gazole', 'SP95': 'sp95', 'SP98': 'sp98', 'E10': 'e10', 'E85': 'e85', 'GPLc': 'gplc' };
-        return station[map[fuel]] || null;
     }
 
     /* ================================================================
@@ -750,6 +941,7 @@
        ================================================================ */
     function renderMap() {
         state.markersLayer.clearLayers();
+        state.starLayer.clearLayers();
 
         const fuel = document.getElementById('fuel-select').value;
         const stations = state.filtered.slice(0, 5000);
@@ -766,6 +958,7 @@
         const prixMin = Math.min(...prixList);
         const prixMax = Math.max(...prixList);
 
+        // Marqueurs standards
         const markers = [];
         stations.forEach(s => {
             const prix = getPrixForFuel(s, fuel);
@@ -782,16 +975,44 @@
                 opacity: 0.9,
                 fillOpacity: 0.75
             });
-
-            marker.bindPopup(buildPopup(s), { maxWidth: 300 });
+            marker.bindPopup(buildPopup(s, false), { maxWidth: 300 });
             markers.push(marker);
         });
 
         state.markersLayer.addLayers(markers);
         document.getElementById('map-count').textContent = stations.length.toLocaleString('fr-FR');
+
+        // Étoiles : meilleur prix de chaque département
+        state.topByDept.forEach(item => {
+            const s = item.station;
+            const starIcon = L.divIcon({
+                html: `<div class="cheapest-star" style="
+                    background: linear-gradient(135deg, #FFD700, #FFA500);
+                    color: #000;
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 16px;
+                    font-weight: 900;
+                    border: 2px solid white;
+                    box-shadow: 0 0 12px rgba(255, 215, 0, 0.8), 0 2px 8px rgba(0,0,0,0.5);
+                    cursor: pointer;
+                ">★</div>`,
+                className: 'cheapest-marker',
+                iconSize: [28, 28],
+                iconAnchor: [14, 14]
+            });
+
+            const marker = L.marker([s.lat, s.lon], { icon: starIcon, zIndexOffset: 1000 });
+            marker.bindPopup(buildPopup(s, true), { maxWidth: 320 });
+            state.starLayer.addLayer(marker);
+        });
     }
 
-    function buildPopup(s) {
+    function buildPopup(s, isCheapest) {
         let pricesHtml = '';
         const fuels = ['Gazole', 'SP95', 'SP98', 'E10', 'E85', 'GPLc'];
 
@@ -809,9 +1030,14 @@
 
         if (!pricesHtml) pricesHtml = '<div style="color:var(--text-dim);font-size:0.7rem;">Aucun prix disponible</div>';
 
+        const badge = isCheapest
+            ? '<div class="popup-badge">★ MEILLEUR PRIX DU DÉPARTEMENT</div>'
+            : '';
+
         return `
+            ${badge}
             <div class="popup-station">${s.ville || 'Station'}</div>
-            <div class="popup-address">${s.adresse || ''} ${s.cp || ''}</div>
+            <div class="popup-address">${s.adresse || ''} ${s.cp || ''} · Dépt ${s.departement}</div>
             <div class="popup-prices">${pricesHtml}</div>
         `;
     }
@@ -925,6 +1151,7 @@
     function renderAll() {
         renderMap();
         renderStats();
+        renderTopList();
         renderCharts();
     }
 
@@ -986,7 +1213,7 @@
 
     document.getElementById('reset-filters').addEventListener('click', () => {
         document.getElementById('search-input').value = '';
-        document.getElementById('fuel-select').value = 'all';
+        document.getElementById('fuel-select').value = 'Gazole';
         document.getElementById('dept-select').value = '';
         document.getElementById('max-price').value = '';
         document.getElementById('service-select').value = '';
