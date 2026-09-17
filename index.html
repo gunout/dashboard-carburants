@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Dashboard des prix des carburants en France — Données officielles data.economie.gouv.fr">
-    <title>⛽ Prix Carburants France — Dashboard Open Data</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='80' font-size='80'>⛽</text></svg>">
+    <meta name="theme-color" content="#0055A4">
+    <title>🇫🇷 Dashboard Carburants France — Prix en temps réel</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='80' font-size='80'>🇫🇷</text></svg>">
     
     <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -20,20 +21,40 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     
     <style>
+        /* ============================================================
+           PALETTE BLEU BLANC ROUGE
+           ============================================================ */
         :root {
-            --bg: #0a0e17;
-            --bg-2: #111827;
-            --bg-3: #1a2332;
-            --card: rgba(255,255,255,0.04);
-            --border: rgba(255,255,255,0.08);
-            --text: #e5e7eb;
-            --text-dim: #9ca3af;
-            --accent: #3b82f6;
-            --accent-2: #8b5cf6;
-            --green: #10b981;
-            --orange: #f59e0b;
-            --red: #ef4444;
-            --yellow: #eab308;
+            /* Bleu France */
+            --bleu: #0055A4;
+            --bleu-clair: #0077CC;
+            --bleu-fonce: #003D7A;
+            --bleu-glow: rgba(0, 85, 164, 0.4);
+
+            /* Blanc */
+            --blanc: #FFFFFF;
+            --blanc-casse: #F5F7FA;
+            --blanc-transparent: rgba(255, 255, 255, 0.08);
+
+            /* Rouge France */
+            --rouge: #EF4135;
+            --rouge-clair: #FF6B5E;
+            --rouge-fonce: #C62828;
+            --rouge-glow: rgba(239, 65, 53, 0.4);
+
+            /* Fond */
+            --bg: #0A1628;
+            --bg-2: #0F1D33;
+            --bg-3: #152A47;
+            --card: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
+            --text: #E8EEF5;
+            --text-dim: #8FA3BF;
+
+            /* Couleurs de prix (inspirées du drapeau) */
+            --prix-bas: #10B981;
+            --prix-moyen: #F59E0B;
+            --prix-haut: #EF4135;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -47,10 +68,28 @@
         }
 
         /* ============================================================
+           DRAPEAU FRANÇAIS — Bande décorative
+           ============================================================ */
+        .drapeau-bar {
+            height: 4px;
+            background: linear-gradient(90deg,
+                var(--bleu) 0%, var(--bleu) 33.33%,
+                var(--blanc) 33.33%, var(--blanc) 66.66%,
+                var(--rouge) 66.66%, var(--rouge) 100%);
+            position: sticky;
+            top: 0;
+            z-index: 10000;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        /* ============================================================
            HEADER
            ============================================================ */
         .header {
-            background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.1));
+            background: linear-gradient(135deg,
+                rgba(0, 85, 164, 0.25) 0%,
+                rgba(255, 255, 255, 0.05) 50%,
+                rgba(239, 65, 53, 0.15) 100%);
             border-bottom: 1px solid var(--border);
             padding: 1rem 2rem;
             display: flex;
@@ -58,18 +97,59 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 1rem;
+            backdrop-filter: blur(12px);
         }
         .header-left h1 {
             font-size: 1.4rem;
             font-weight: 800;
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899);
+            background: linear-gradient(135deg, var(--bleu-clair) 0%, var(--blanc) 50%, var(--rouge-clair) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            letter-spacing: -0.5px;
         }
-        .header-left .subtitle { font-size: 0.75rem; color: var(--text-dim); margin-top: 0.15rem; }
+        .header-left .subtitle {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            margin-top: 0.15rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .header-left .subtitle .flag {
+            display: inline-flex;
+            width: 18px;
+            height: 12px;
+            border-radius: 2px;
+            overflow: hidden;
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.2);
+        }
+        .header-left .subtitle .flag span {
+            flex: 1;
+        }
+        .header-left .subtitle .flag span:nth-child(1) { background: var(--bleu); }
+        .header-left .subtitle .flag span:nth-child(2) { background: var(--blanc); }
+        .header-left .subtitle .flag span:nth-child(3) { background: var(--rouge); }
+
         .header-right { display: flex; align-items: center; gap: 1rem; font-size: 0.75rem; color: var(--text-dim); }
         .header-right strong { color: var(--text); }
+
+        .live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: var(--rouge);
+            color: white;
+            font-size: 0.6rem;
+            font-weight: 700;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 12px var(--rouge-glow);
+        }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
 
         /* ============================================================
            LAYOUT
@@ -86,10 +166,10 @@
             overflow-y: auto;
             max-height: calc(100vh - 70px);
             position: sticky;
-            top: 0;
+            top: 4px;
         }
         .sidebar::-webkit-scrollbar { width: 5px; }
-        .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .sidebar::-webkit-scrollbar-thumb { background: var(--bleu); border-radius: 3px; }
 
         .filter-group { margin-bottom: 0.9rem; }
         .filter-group label {
@@ -110,9 +190,12 @@
             color: var(--text);
             font-size: 0.82rem;
             outline: none;
-            transition: border-color 0.2s;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
-        .filter-group input:focus, .filter-group select:focus { border-color: var(--accent); }
+        .filter-group input:focus, .filter-group select:focus {
+            border-color: var(--bleu);
+            box-shadow: 0 0 0 2px var(--bleu-glow);
+        }
         .filter-group select option { background: var(--bg-2); }
 
         /* Statistiques */
@@ -128,12 +211,21 @@
             border-radius: 10px;
             padding: 0.6rem;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--bleu), var(--blanc), var(--rouge));
         }
         .stat-label { font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
         .stat-value { font-size: 1.05rem; font-weight: 700; margin-top: 0.15rem; }
-        .stat-value.green { color: var(--green); }
-        .stat-value.red { color: var(--red); }
-        .stat-value.blue { color: var(--accent); }
+        .stat-value.green { color: var(--prix-bas); }
+        .stat-value.red { color: var(--prix-haut); }
+        .stat-value.blue { color: var(--bleu-clair); }
 
         /* Graphiques */
         .chart-container { margin-bottom: 0.9rem; }
@@ -150,7 +242,7 @@
         }
         .legend-bar {
             height: 6px;
-            background: linear-gradient(90deg, var(--green), var(--yellow), var(--red));
+            background: linear-gradient(90deg, var(--prix-bas), var(--prix-moyen), var(--prix-haut));
             border-radius: 3px;
             margin-top: 0.3rem;
         }
@@ -161,14 +253,23 @@
             padding: 0.6rem;
             border-radius: 8px;
             border: none;
-            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            background: linear-gradient(135deg, var(--bleu), var(--bleu-clair));
             color: white;
             font-weight: 600;
             font-size: 0.82rem;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
         }
-        .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(59,130,246,0.4); }
+        .btn::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--bleu), var(--blanc), var(--rouge));
+        }
+        .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px var(--bleu-glow); }
 
         /* ============================================================
            MAP
@@ -181,7 +282,7 @@
             top: 1rem;
             right: 1rem;
             z-index: 1000;
-            background: rgba(17,24,39,0.95);
+            background: rgba(15, 29, 51, 0.95);
             backdrop-filter: blur(12px);
             border: 1px solid var(--border);
             border-radius: 12px;
@@ -189,7 +290,7 @@
             font-size: 0.8rem;
             max-width: 260px;
         }
-        .map-overlay .count { font-size: 1.3rem; font-weight: 700; color: var(--accent); }
+        .map-overlay .count { font-size: 1.3rem; font-weight: 700; color: var(--bleu-clair); }
         .map-overlay .count-label { font-size: 0.65rem; color: var(--text-dim); }
 
         /* Sélecteur de fond de carte */
@@ -198,7 +299,7 @@
             top: 1rem;
             left: 1rem;
             z-index: 1000;
-            background: rgba(17,24,39,0.95);
+            background: rgba(15, 29, 51, 0.95);
             backdrop-filter: blur(12px);
             border: 1px solid var(--border);
             border-radius: 12px;
@@ -218,7 +319,12 @@
             font-weight: 500;
         }
         .basemap-btn:hover { background: var(--card); color: var(--text); }
-        .basemap-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+        .basemap-btn.active {
+            background: var(--bleu);
+            color: white;
+            border-color: var(--bleu);
+            box-shadow: 0 0 12px var(--bleu-glow);
+        }
 
         /* ============================================================
            POPUP LEAFLET
@@ -233,15 +339,15 @@
         .leaflet-popup-tip { background: var(--bg-2) !important; }
         .leaflet-popup-content { margin: 0.7rem 0.9rem !important; font-family: 'Inter', sans-serif !important; }
 
-        .popup-station { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.2rem; }
+        .popup-station { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.2rem; color: var(--blanc); }
         .popup-address { font-size: 0.7rem; color: var(--text-dim); margin-bottom: 0.5rem; }
         .popup-prices { display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem; }
         .popup-price-item { font-size: 0.7rem; display: flex; justify-content: space-between; padding: 0.15rem 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
         .popup-price-item .name { color: var(--text-dim); }
         .popup-price-item .value { font-weight: 700; }
-        .popup-price-item .value.green { color: var(--green); }
-        .popup-price-item .value.orange { color: var(--orange); }
-        .popup-price-item .value.red { color: var(--red); }
+        .popup-price-item .value.green { color: var(--prix-bas); }
+        .popup-price-item .value.orange { color: var(--prix-moyen); }
+        .popup-price-item .value.red { color: var(--prix-haut); }
 
         /* ============================================================
            LOADING
@@ -249,7 +355,7 @@
         .loading-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(10,14,23,0.95);
+            background: rgba(10, 22, 40, 0.97);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -260,8 +366,10 @@
         .loading-overlay.hidden { opacity: 0; pointer-events: none; }
         .spinner {
             width: 44px; height: 44px;
-            border: 3px solid rgba(59,130,246,0.2);
-            border-top-color: var(--accent);
+            border: 3px solid rgba(0, 85, 164, 0.2);
+            border-top-color: var(--bleu);
+            border-right-color: var(--blanc);
+            border-bottom-color: var(--rouge);
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
             margin-bottom: 0.8rem;
@@ -278,7 +386,7 @@
         }
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            background: linear-gradient(90deg, var(--bleu), var(--blanc), var(--rouge));
             width: 0%;
             transition: width 0.3s;
         }
@@ -296,14 +404,21 @@
 </head>
 <body>
 
+    <!-- Bande décorative drapeau -->
+    <div class="drapeau-bar"></div>
+
     <header class="header">
         <div class="header-left">
-            <h1>⛽ Prix des Carburants — France</h1>
-            <div class="subtitle">Données officielles · data.economie.gouv.fr · Mise à jour toutes les 10 min</div>
+            <h1>⛽ Dashboard Carburants France</h1>
+            <div class="subtitle">
+                <span class="flag"><span></span><span></span><span></span></span>
+                Données officielles · data.economie.gouv.fr · Mise à jour toutes les 10 min
+            </div>
         </div>
         <div class="header-right">
             <div>Actualisé : <strong id="last-update">—</strong></div>
             <div>Source : <strong>prix-des-carburants-en-france-flux-instantane-v2</strong></div>
+            <span class="live-badge">● LIVE</span>
         </div>
     </header>
 
@@ -426,7 +541,6 @@
         MAX_RECORDS: 10000,
         CENTER: [46.603354, 1.888334],
         ZOOM: 6,
-        // Fournisseurs de tuiles GRATUITS et SANS CLÉ API
         TILE_PROVIDERS: {
             osm: {
                 url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -471,10 +585,8 @@
             preferCanvas: true
         });
 
-        // Ajouter le fond de carte par défaut (OpenStreetMap)
         setBasemap('osm');
 
-        // Cluster de marqueurs pour la performance
         state.markersLayer = L.markerClusterGroup({
             chunkedLoading: true,
             maxClusterRadius: 50,
@@ -484,9 +596,9 @@
             iconCreateFunction: function(cluster) {
                 const count = cluster.getChildCount();
                 let size = 'small';
-                let color = '#3b82f6';
-                if (count > 100) { size = 'large'; color = '#ef4444'; }
-                else if (count > 10) { size = 'medium'; color = '#f59e0b'; }
+                let color = '#0055A4';
+                if (count > 100) { size = 'large'; color = '#EF4135'; }
+                else if (count > 10) { size = 'medium'; color = '#F59E0B'; }
 
                 return L.divIcon({
                     html: `<div style="background:${color};color:white;border-radius:50%;width:${size==='small'?30:size==='medium'?40:50}px;height:${size==='small'?30:size==='medium'?40:50}px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:${size==='small'?11:size==='medium'?12:13}px;border:2px solid rgba(255,255,255,0.3);box-shadow:0 2px 12px rgba(0,0,0,0.4);">${count}</div>`,
@@ -512,7 +624,6 @@
 
         state.currentBasemap = style;
 
-        // Mettre à jour les boutons
         document.querySelectorAll('.basemap-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.style === style);
         });
@@ -635,7 +746,7 @@
     }
 
     /* ================================================================
-       RENDU DE LA CARTE (avec clustering)
+       RENDU DE LA CARTE
        ================================================================ */
     function renderMap() {
         state.markersLayer.clearLayers();
@@ -643,7 +754,6 @@
         const fuel = document.getElementById('fuel-select').value;
         const stations = state.filtered.slice(0, 5000);
 
-        // Calculer les bornes de prix
         const prixList = stations
             .map(s => getPrixForFuel(s, fuel))
             .filter(p => p !== null && p > 0);
@@ -662,7 +772,7 @@
             if (prix === null) return;
 
             const ratio = prixMax > prixMin ? (prix - prixMin) / (prixMax - prixMin) : 0.5;
-            const color = ratio < 0.33 ? '#10b981' : ratio < 0.66 ? '#f59e0b' : '#ef4444';
+            const color = ratio < 0.33 ? '#10B981' : ratio < 0.66 ? '#F59E0B' : '#EF4135';
 
             const marker = L.circleMarker([s.lat, s.lon], {
                 radius: 5,
@@ -733,7 +843,6 @@
        GRAPHIQUES
        ================================================================ */
     function renderCharts() {
-        // Graphique 1 : Nombre de stations par carburant
         const fuelCounts = { Gazole: 0, SP95: 0, SP98: 0, E10: 0, E85: 0, GPLc: 0 };
         state.filtered.forEach(s => {
             if (s.gazole) fuelCounts.Gazole++;
@@ -751,7 +860,7 @@
                 labels: Object.keys(fuelCounts),
                 datasets: [{
                     data: Object.values(fuelCounts),
-                    backgroundColor: ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#6b7280'],
+                    backgroundColor: ['#0055A4', '#0077CC', '#FFFFFF', '#F59E0B', '#10B981', '#EF4135'],
                     borderRadius: 4
                 }]
             },
@@ -760,13 +869,12 @@
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    x: { ticks: { color: '#9ca3af', font: { size: 9 } }, grid: { display: false } },
-                    y: { ticks: { color: '#9ca3af', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                    x: { ticks: { color: '#8FA3BF', font: { size: 9 } }, grid: { display: false } },
+                    y: { ticks: { color: '#8FA3BF', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
                 }
             }
         });
 
-        // Graphique 2 : Distribution des prix
         const fuel = document.getElementById('fuel-select').value;
         const prixList = state.filtered
             .map(s => getPrixForFuel(s, fuel))
@@ -795,8 +903,8 @@
                 labels: Object.keys(bins),
                 datasets: [{
                     data: Object.values(bins),
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59,130,246,0.15)',
+                    borderColor: '#0055A4',
+                    backgroundColor: 'rgba(0, 85, 164, 0.15)',
                     fill: true,
                     tension: 0.4,
                     pointRadius: 2
@@ -807,16 +915,13 @@
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    x: { ticks: { color: '#9ca3af', font: { size: 8 }, maxTicksLimit: 8 }, grid: { display: false } },
-                    y: { ticks: { color: '#9ca3af', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                    x: { ticks: { color: '#8FA3BF', font: { size: 8 }, maxTicksLimit: 8 }, grid: { display: false } },
+                    y: { ticks: { color: '#8FA3BF', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
                 }
             }
         });
     }
 
-    /* ================================================================
-       RENDU GLOBAL
-       ================================================================ */
     function renderAll() {
         renderMap();
         renderStats();
@@ -847,7 +952,6 @@
     async function init() {
         initMap();
 
-        // Sélecteur de fond de carte
         document.querySelectorAll('.basemap-btn').forEach(btn => {
             btn.addEventListener('click', () => setBasemap(btn.dataset.style));
         });
@@ -867,7 +971,7 @@
         } catch (error) {
             console.error('Erreur init :', error);
             document.getElementById('loader').innerHTML =
-                '<p style="color:#ef4444;">Erreur de chargement. Vérifiez la console.</p>';
+                '<p style="color:#EF4135;">Erreur de chargement. Vérifiez la console.</p>';
         }
     }
 
@@ -878,7 +982,6 @@
     document.getElementById('dept-select').addEventListener('change', applyFilters);
     document.getElementById('service-select').addEventListener('change', applyFilters);
     document.getElementById('max-price').addEventListener('input', debounce(applyFilters, 400));
-
     document.getElementById('search-input').addEventListener('input', debounce(applyFilters, 300));
 
     document.getElementById('reset-filters').addEventListener('click', () => {
